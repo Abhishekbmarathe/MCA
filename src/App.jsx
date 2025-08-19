@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './components/Home'
 import Nav from './components/Nav';
-import AdminLogin from './components/LoginRoles/Admin'
-import OrganizerLogin from  './components/LoginRoles/Organizer'
+import Signin from './components/LoginRoles/Signin'
+import Signup from  './components/LoginRoles/Signup'
 // import UserLogin from  './components/LoginRoles/User'
 
 function App() {
@@ -14,8 +14,8 @@ function App() {
       <Routes>
 
         <Route path="/" element={<Home />} />
-        <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path="/organizer-login" element={<OrganizerLogin />} />
+        <Route path="/Signup" element={<Signup />} />
+        <Route path="/Signin" element={<Signin />} />
         {/* <Route path="/user-login" element={<UserLogin />} /> */}
 
       </Routes>
