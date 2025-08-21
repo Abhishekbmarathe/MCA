@@ -10,13 +10,13 @@ const Nav = () => {
       {/* Auth Buttons */}
       <div className="flex gap-4">
         <Link
-          to="/signup"
+          to="/Signup"
           className="bg-[#4f46e5] text-white px-4 py-2 rounded-md hover:bg-[#4338ca] transition"
         >
           Sign Up
         </Link>
         <Link
-          to="/signin"
+          to="/Signin"
           className="border border-[#4f46e5] text-[#4f46e5] px-4 py-2 rounded-md hover:bg-[#eef2ff] transition"
         >
           Sign In

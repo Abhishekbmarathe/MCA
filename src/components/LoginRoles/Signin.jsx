@@ -1,14 +1,50 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../../Modules/Api";
+import axios from "axios";
 
 const SigninForm = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Sign In submitted with:", { username, password });
-    // here you can add navigation or API call
+
+    try {
+      const response = await axios.post(
+        api + "api/signin", // backend URL
+        { username, password },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("✅ Login Success:", response.data);
+
+      // Store full user object in localStorage
+      localStorage.setItem("user", JSON.stringify(response.data.user));
+      const UserRole = response.data.user.username;
+      const Role = response.data.user.role;
+      // Redirect based on role
+      if (UserRole === "admin") {
+        navigate("/Admin");
+      } else {
+        navigate("/" + Role);
+      }
+
+
+      alert("Login Successful!");
+    } catch (error) {
+      console.error("❌ Login Failed:", error.response?.data || error.message);
+      alert("Login Failed!");
+    }
+
   };
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#f5f7ff] to-[#e6ebff]">

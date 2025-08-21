@@ -1,15 +1,37 @@
 import React, { useState } from "react";
+import axios from 'axios';
+import { useNavigate } from "react-router-dom";
+import api from "../../Modules/Api";
 
 const SignupForm = () => {
   const [role, setRole] = useState("User"); // default role is User
-  const [email, setEmail] = useState("");
+  const [username, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted with:", { role, email, password });
-    // here you can add navigation or API call
+
+    try {
+      const response = await axios.post(api+"api/signup", {
+        role,
+        username,
+        password,
+      });
+
+      console.log("✅ Success:", response.data);
+      alert("Signup successful!");
+      navigate("/Signin");
+    } catch (error) {
+      console.error("❌ Error submitting form:", error.response?.data || error.message);
+      alert("Signup failed!");
+    }
   };
+
+
+
+
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#f5f7ff] to-[#e6ebff]">
@@ -48,12 +70,12 @@ const SignupForm = () => {
           {/* Email */}
           <div className="mb-5">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
+              Username
             </label>
             <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
+              type="text"
+              placeholder="Enter Username"
+              value={username}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
