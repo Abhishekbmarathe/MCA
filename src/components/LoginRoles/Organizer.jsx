@@ -3,102 +3,227 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import api from "../../Modules/Api";
 
-
 const Organizer = () => {
   const navigate = useNavigate();
+
+  const userData = JSON.parse(localStorage.getItem("user"));
+  const userId = userData?.userId;
+
+  const organizerName = localStorage.getItem("username") || "Organizer"; // 👈 fallback if not stored
+
+  const [formData, setFormData] = useState({
+    title: "",
+    date: "",
+    location: "",
+    organizer: organizerName,
+    description: "",
+    image: null,
+    userId: userId,
+  });
+
+  const [imagePreview, setImagePreview] = useState(null);
   const [events, setEvents] = useState([]);
-  const user = JSON.parse(localStorage.getItem("user")); // { userId, username, role }
 
-  // useEffect(() => {
-  //   const fetchEvents = async () => {
-  //     try {
-  //       const res = await axios.get(`http://localhost:5000/api/events/user/${user.userId}`);
-  //       setEvents(res.data);
-  //     } catch (error) {
-  //       console.error("❌ Failed to fetch events:", error);
-  //     }
-  //   };
-  //   fetchEvents();
-  // }, [user.userId]);
+  // Fetch only organizer's events
+  useEffect(() => {
+    const fetchUserEvents = async () => {
+      try {
+        const res = await axios.get(`${api}api/events/user/${userId}`);
+        setEvents(res.data);
+      } catch (err) {
+        console.error("❌ Failed to fetch user events", err);
+      }
+    };
+    fetchUserEvents();
+  }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    navigate("/login");
+  // Handle input change
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+    if (files) {
+      setFormData({ ...formData, [name]: files[0] });
+
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result);
+      reader.readAsDataURL(files[0]);
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
-  const handleAddEvent = () => {
-    navigate("/addevent");
+  // Submit new event
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const data = new FormData();
+      Object.keys(formData).forEach((key) => {
+        if (formData[key]) data.append(key, formData[key]);
+      });
+
+      const res = await axios.post(api + "api/events", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      setEvents([...events, res.data.event]);
+      alert("✅ Event submitted!");
+
+      setFormData({
+        title: "",
+        date: "",
+        location: "",
+        organizer: organizerName,
+        description: "",
+        image: null,
+        userId: userId,
+      });
+      setImagePreview(null);
+    } catch (err) {
+      console.error("❌ Failed to add event", err);
+      alert("Failed to submit event!");
+    }
+  };
+
+  // Logout
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/");
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       {/* Header */}
-      <div className="flex justify-between items-center px-8 py-4 shadow bg-white">
-        <h1 className="text-xl font-semibold">Uploader Dashboard</h1>
-        <div className="flex items-center space-x-4">
-          <span className="text-gray-600">Welcome, {user?.username}</span>
-          <button
-            onClick={handleLogout}
-            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-          >
-            Logout
-          </button>
-        </div>
+      <div className="bg-indigo-600 text-white p-4 flex justify-between items-center shadow">
+        <h1 className="text-xl font-bold">Welcome, {organizerName} 🎉</h1>
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded"
+        >
+          Logout
+        </button>
       </div>
 
-      {/* Content */}
-      <div className="p-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-semibold">My Events</h2>
-          <button
-            onClick={handleAddEvent}
-            className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700"
-          >
-            Add New Event
-          </button>
+      <div className="max-w-6xl mx-auto p-6">
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white shadow rounded p-4 text-center">
+            <h2 className="text-lg font-bold">Total Events</h2>
+            <p className="text-2xl text-indigo-600">{events.length}</p>
+          </div>
+          <div className="bg-white shadow rounded p-4 text-center">
+            <h2 className="text-lg font-bold">Approved</h2>
+            <p className="text-2xl text-green-600">
+              {events.filter((e) => e.status === "approved").length}
+            </p>
+          </div>
+          <div className="bg-white shadow rounded p-4 text-center">
+            <h2 className="text-lg font-bold">Pending</h2>
+            <p className="text-2xl text-yellow-600">
+              {events.filter((e) => e.status === "pending").length}
+            </p>
+          </div>
         </div>
 
-        {events.length === 0 ? (
-          <p className="text-gray-500">No events uploaded yet.</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event) => (
-              <div
-                key={event._id}
-                className="bg-white shadow rounded-lg p-4 hover:shadow-md transition"
-              >
+        {/* Add Event Form */}
+        <div className="bg-white p-6 rounded shadow mb-8">
+          <h2 className="text-lg font-bold mb-4">Add Event</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <input
+              type="text"
+              name="title"
+              placeholder="Event Title"
+              className="w-full border p-2 rounded"
+              value={formData.title}
+              onChange={handleChange}
+              required
+            />
+            <input
+              type="date"
+              name="date"
+              className="w-full border p-2 rounded"
+              value={formData.date}
+              onChange={handleChange}
+              required
+            />
+            <input
+              type="text"
+              name="location"
+              placeholder="Location"
+              className="w-full border p-2 rounded"
+              value={formData.location}
+              onChange={handleChange}
+              required
+            />
+            <textarea
+              name="description"
+              placeholder="Description"
+              className="w-full border p-2 rounded"
+              rows="3"
+              value={formData.description}
+              onChange={handleChange}
+            ></textarea>
+            <input
+              type="file"
+              name="image"
+              accept="image/*"
+              className="w-full border p-2 rounded"
+              onChange={handleChange}
+            />
+
+            {imagePreview && (
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="w-32 h-32 object-cover rounded border mt-2"
+              />
+            )}
+
+            <button
+              type="submit"
+              className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+            >
+              Add Event
+            </button>
+          </form>
+        </div>
+
+        {/* Events List */}
+        <h2 className="text-lg font-bold mb-4">Your Events</h2>
+        <div className="space-y-4">
+          {events.map((event) => (
+            <div
+              key={event._id}
+              className="bg-white p-4 shadow rounded flex justify-between items-center"
+            >
+              <div className="flex gap-4">
                 {event.image && (
                   <img
                     src={event.image}
                     alt={event.title}
-                    className="w-full h-40 object-cover rounded-md"
+                    className="w-20 h-20 object-cover rounded border"
                   />
                 )}
-                <div className="mt-4">
-                  <h3 className="text-lg font-bold">{event.title}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{event.description}</p>
-                  <p className="mt-2 text-sm text-gray-700">
-                    <strong>Location:</strong> {event.location}
+                <div>
+                  <h3 className="font-bold text-indigo-700">{event.title}</h3>
+                  <p className="text-sm text-gray-600">
+                    {event.date} • {event.location}
                   </p>
-                  <p className="text-sm text-gray-700">
-                    <strong>Date:</strong>{" "}
-                    {new Date(event.date).toLocaleDateString()}
-                  </p>
-                  <span
-                    className={`inline-block mt-3 px-3 py-1 rounded-full text-xs font-medium ${event.status === "Approved"
-                        ? "bg-green-100 text-green-700"
-                        : event.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-red-100 text-red-700"
+                  <p className="text-gray-700">{event.description}</p>
+                  <p
+                    className={`text-xs font-semibold mt-1 ${event.status === "approved"
+                      ? "text-green-600"
+                      : event.status === "rejected"
+                        ? "text-red-600"
+                        : "text-yellow-600"
                       }`}
                   >
-                    {event.status}
-                  </span>
+                    Status: {event.status}
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+              <p className="text-xs text-gray-500">👁 {event.views || 0} views</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

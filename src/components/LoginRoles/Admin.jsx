@@ -3,6 +3,9 @@ import axios from "axios";
 import api from "../../Modules/Api";
 
 const AdminDashboard = () => {
+  const userData = JSON.parse(localStorage.getItem("user"));
+  const userId = userData?.userId;
+
   const [formData, setFormData] = useState({
     title: "",
     date: "",
@@ -10,7 +13,7 @@ const AdminDashboard = () => {
     organizer: "",
     description: "",
     image: null,
-    userId: localStorage.getItem("userId"),
+    userId: userId
   });
 
   const [imagePreview, setImagePreview] = useState(null);
@@ -214,13 +217,12 @@ const AdminDashboard = () => {
                   </p>
                   <p className="text-gray-700">{event.description}</p>
                   <p
-                    className={`text-xs font-semibold mt-1 ${
-                      event.status === "approved"
-                        ? "text-green-600"
-                        : event.status === "rejected"
+                    className={`text-xs font-semibold mt-1 ${event.status === "approved"
+                      ? "text-green-600"
+                      : event.status === "rejected"
                         ? "text-red-600"
                         : "text-yellow-600"
-                    }`}
+                      }`}
                   >
                     Status: {event.status}
                   </p>
