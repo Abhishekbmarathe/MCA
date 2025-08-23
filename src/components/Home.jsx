@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Nav from "./Nav";
-
-const api = "http://localhost:5000/"; // 👈 change if backend runs on different port
+import api from "../Modules/Api";
+// const api = "http://localhost:5000/"; // 👈 change if backend runs on different port
 
 const Home = () => {
     const [events, setEvents] = useState([]);
