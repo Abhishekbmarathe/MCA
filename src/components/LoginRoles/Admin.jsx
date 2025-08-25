@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import api from "../../Modules/Api";
 
 const AdminDashboard = () => {
   const userData = JSON.parse(localStorage.getItem("user"));
   const userId = userData?.userId;
+  const navigate = useNavigate();
+
+
 
   const [formData, setFormData] = useState({
     title: "",
@@ -96,8 +100,27 @@ const AdminDashboard = () => {
     pending: events.filter((e) => e.status === "pending").length,
   };
 
+
+  // Logout
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/");
+  };
+
+
+
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-gray-100 p-6/">
+      {/* Header */}
+      <div className="bg-indigo-600 text-white p-4 flex justify-between items-center shadow">
+        <h1 className="text-xl font-bold">Welcome,  🎉</h1>
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded"
+        >
+          Logout
+        </button>
+      </div>
       <div className="max-w-6xl mx-auto">
         {/* Dashboard Header */}
         <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
@@ -230,11 +253,21 @@ const AdminDashboard = () => {
               </div>
               <div className="space-x-3">
                 <button
-                  onClick={() => alert(JSON.stringify(event, null, 2))}
+                  onClick={async () => {
+                    try {
+                      // update views in backend
+                      await axios.patch(api + `api/events/${event._id}/view`);
+                      // then navigate to event details page
+                      navigate(`/events/${event._id}`);
+                    } catch (err) {
+                      console.error("❌ Failed to update views", err);
+                    }
+                  }}
                   className="text-blue-500 hover:underline"
                 >
                   View
                 </button>
+
                 <button
                   onClick={() => updateStatus(event._id, "approved")}
                   className="text-green-500 hover:underline"

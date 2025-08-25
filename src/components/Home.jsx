@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom"; // 👈 for navigation
 import Nav from "./Nav";
 import api from "../Modules/Api";
-// const api = "http://localhost:5000/"; // 👈 change if backend runs on different port
 
 const Home = () => {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState(""); // filter input
+    const [filter, setFilter] = useState("");
+    const navigate = useNavigate(); // 👈
 
     // Fetch events on page load
     useEffect(() => {
@@ -21,7 +22,6 @@ const Home = () => {
                 setLoading(false);
             }
         };
-
         fetchEvents();
     }, []);
 
@@ -40,13 +40,33 @@ const Home = () => {
             : `data:image/jpeg;base64,${base64}`;
     };
 
+    let userRole = null;
+
+    // ✅ Separate function for handling "View Details"
+    const handleViewDetails = async (eventId) => {
+        try {
+            // update views
+            const user = JSON.parse(localStorage.getItem("user"));
+            userRole = user?.role || null;
+
+            if (userRole !== null) {
+                await axios.patch(`${api}api/events/${eventId}/view`);
+                // navigate to details page
+                navigate(`/events/${eventId}`);
+            } else {
+                alert("please login to view")
+            }
+        } catch (err) {
+            console.error("❌ Failed to update views", err);
+        }
+    };
+
     return (
         <div className="min-h-screen flex flex-col">
             <Nav />
 
             {/* Hero Section */}
             <section className="flex min-h-[60vh]">
-                {/* Left Section */}
                 <div className="w-1/2 bg-[#4f46e5] flex flex-col justify-center items-start p-12 text-white">
                     <h1 className="text-4xl font-bold mb-4 leading-tight">
                         Discover Amazing <br /> Events Near You
@@ -61,7 +81,6 @@ const Home = () => {
                     </button>
                 </div>
 
-                {/* Right Section */}
                 <div className="w-1/2 bg-yellow-400 text-white flex justify-center items-center text-3xl font-bold">
                     Events Await
                 </div>
@@ -127,20 +146,13 @@ const Home = () => {
                                     <p className="text-sm mb-1">📍 {event.location}</p>
                                     <p className="text-sm mb-3">📅 {event.date}</p>
 
+                                    {/* ✅ Button now calls the separate function */}
                                     <button
-                                        onClick={async () => {
-                                            try {
-                                                await axios.patch(`${api}api/events/${event._id}/view`);
-                                                alert(`You viewed: ${event.title}`); // 👈 replace with navigation if needed
-                                            } catch (err) {
-                                                console.error("❌ Failed to update views", err);
-                                            }
-                                        }}
+                                        onClick={() => handleViewDetails(event._id)}
                                         className="w-full bg-[#4f46e5] hover:bg-purple-700 text-white py-2 rounded-xl transition cursor-pointer"
                                     >
                                         View Details
                                     </button>
-
                                 </div>
                             </div>
                         ))
@@ -148,7 +160,6 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* Footer */}
             <footer className="bg-gray-800 text-white text-center py-4 mt-6">
                 © {new Date().getFullYear()} Event Platform. All rights reserved.
             </footer>
